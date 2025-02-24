@@ -40,7 +40,9 @@ io.on('connection', (socket) => new Promise(async () => {
   const username = await getSocketUser(socket.id);
   if (!username) {socket.disconnect(); return; }
   console.log(`${username} connected`);
-  socket.join(NO_ROOM);
+  await socket.join(NO_ROOM);
+  const roomStatus = await getRoomStatus();
+  await io.emit(SocketTags.JOIN, roomStatus);
   socket.on('disconnect',() => {
     unregisterSocket(socket.id);
     removeUserFromAllRooms(username);
@@ -51,9 +53,18 @@ io.on('connection', (socket) => new Promise(async () => {
     await addUserToRoom(roomId, username);
     await socket.leave(NO_ROOM);
     await socket.join(roomId);
-    const users = await getUsersInRoom(roomId);
-    await io.to(roomId).emit(SocketTags.JOIN, {room: roomId, users});
+    const roomStatus = await getRoomStatus();
+    await io.emit(SocketTags.JOIN, roomStatus);
     console.log(`${username} joined room ${roomId}`);
+  });
+
+  socket.on(SocketTags.LEAVE, async (roomId: string) => {
+    await removeUserFromRoom(roomId, username);
+    await socket.leave(roomId);
+    await socket.join(NO_ROOM);
+    const roomStatus = await getRoomStatus();
+    await io.emit(SocketTags.LEAVE, roomStatus);
+    console.log(`${username} left room ${roomId}`);
   });
 
   socket.on(SocketTags.START, async () => {
@@ -112,14 +123,10 @@ function unregisterSocket(socketId: string) {
   return redisClient.del(`socket:${socketId}:user`);
 }
 
-async function initMatch(socket: Socket, roomId: string) {
-  }
-
 function addUserToRoom(roomId: string, username: string) {
   return redisClient.sAdd(`room:${roomId}:users`, username).then( () =>
          redisClient.set(`user:${username}:room`, roomId)
   );
-
 }
 
 function getUserRoom(username: string) {
@@ -130,6 +137,17 @@ function removeUserFromRoom(roomId: string, username: string) {
   return redisClient.sRem(`room:${roomId}:users`, username).then( () =>
          redisClient.del(`user:${username}:room`)
 );
+}
+
+function getActiveRooms() {
+  return redisClient.keys(`room:*`).then(keys => keys.map(key => key.split(':')[1]))
+}
+
+async function getRoomStatus() {
+  const rooms = await getActiveRooms();
+  const results = await Promise.all(rooms.map(async room => ({ [room]: await getUsersInRoom(room) })));
+  // Merge the array of objects into a single dictionary
+  return Object.assign({}, ...results);
 }
 
 function removeUserFromAllRooms(username: string) {
@@ -143,6 +161,8 @@ function removeUserFromAllRooms(username: string) {
 function getUsersInRoom(roomId: string) {
   return redisClient.sMembers(`room:${roomId}:users`);
 }
+
+
 
 function setGameState(roomId: string, gameState: GameState) {
   return redisClient.set(`room:${roomId}:match`, JSON.stringify(gameState));
