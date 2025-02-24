@@ -1,15 +1,8 @@
 import { Coords, DevelopmentCard, Hexagonal, HexType, EdgeLocation, Robber, NodeLocation, Table } from "../Entities/Models";
-import { GameState, PlayerState } from "../Entities/State";
-import { diffEdges, diffNodes, getConnectedRoads, getRoadNodes, uniqueEdges } from "./BoardUtils";
+import { GameState, getRound, PlayerState } from "../Entities/State";
+import { allEdges, allNodes, diffEdges, diffNodes, getConnectedRoads, getRoadNodes, uniqueEdges } from "./BoardUtils";
 
-// Function to shuffle an array
-export function shuffle(array: any[]): any[] {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-}
+
 
 export function getTableState(gameState: GameState) {
     return {
@@ -21,11 +14,31 @@ export function getTableState(gameState: GameState) {
 }
 
 // Example usage in availableStructures function
-export function availableStructures(playerState: PlayerState, gameState: GameState): NodeLocation[] {
-    return diffNodes(playerState.Roads.map(getRoadNodes).flat(1), [...gameState.Table.Settlements, ...gameState.Table.Cities]);
+export function availableStructures(playerId: number, gameState: GameState): NodeLocation[] {
+    if (playerId == -1) return [];
+    switch (getRound(gameState)) {
+        case 0:
+        case 3:
+            return [];
+        case 1:
+        case 2:
+            return diffNodes(allNodes, [...gameState.Table.Settlements, ...gameState.Table.Cities]);
+        default:
+            return diffNodes(gameState.players[playerId].Roads.map(getRoadNodes).flat(1), [...gameState.Table.Settlements, ...gameState.Table.Cities]); 
+    }
 }
 
 // Function to get available road locations for building for specific player
-export function availableRoads(playerState: PlayerState, gameState: GameState): EdgeLocation[] {
-    return diffEdges(playerState.Roads.map(getConnectedRoads).flat(1), gameState.Table.Roads);
-}
+export function availableRoads(playerId: number, gameState: GameState): EdgeLocation[] {
+    if (playerId == -1) return [];
+    switch (getRound(gameState)) {
+        case 1:
+        case 2:
+            return [];
+        case 0:
+        case 3:
+            return diffEdges(allEdges, gameState.Table.Roads);
+        default:
+            return diffEdges(gameState.players[playerId].Roads.map(getConnectedRoads).flat(1), gameState.Table.Roads);
+    }
+    }

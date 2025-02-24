@@ -1,17 +1,20 @@
 import { DevelopmentCard, Resources, EdgeLocation, NodeLocation, SpecialCard, Table } from './Models';
-import { buildCity, buildRoad, buildSettlement, buyDevelopmentCard, finishStep, playDevelopmentCard, tradeResources } from '../Logic/Step_server';
 
 export type GameState = {
     Table: Table,
     players: PlayerState[],
-    currentPlayer: number,
     stack: DevelopmentCard[],
-    round: number,
+    turn: number,
+    lastDice: [number, number] | null,
     user: UserState
 }
 
+export const getCurrentPlayer = (state: GameState) => state.turn % state.players.length;
+export const getRound = (state: GameState) => Math.floor(state.turn / state.players.length);
+export const getNextRound = (state: GameState) => Math.floor((state.turn + 1) / state.players.length);
+
 export type UserState = {
-    playerIdx: number,
+    playerId: number,
     availableVisible: 'Cities' | 'Settlements' | 'Roads' | null 
 }
 

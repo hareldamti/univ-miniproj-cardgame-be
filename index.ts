@@ -10,9 +10,10 @@ import { exit } from "process";
 import { NO_ROOM, validateToken } from "./src/utils";
 import { SocketTags } from "./package/Consts"
 import { initializeGame } from "./package/Logic/Initialization"
-import { GameAction, GameActionTypes } from "./package/Entities/GameActions"
+import { GameAction, GameActionTypes, gameReducer } from "./package/Entities/GameActions"
 import { GameState } from "./package/Entities/State";
-
+import { PlayerAction, PlayerActionType } from "./package/Entities/PlayerActions";
+import { handlePlayerAction } from "./package/Logic/GameLogic";
 
 const redisClient = createClient();
 redisClient.on('error', err => {console.log('Redis Client Error', err); exit(1);});
@@ -69,14 +70,21 @@ io.on('connection', (socket) => new Promise(async () => {
     const roomId = await getUserRoom(username);
     if (!roomId) return;
     const initializedGameState = await getGameState(roomId);
-    initializedGameState.user.playerIdx = initializedGameState.players.findIndex(player => player.username === username);
+    initializedGameState.user.playerId = initializedGameState.players.findIndex(player => player.username === username);
     await socket.emit(SocketTags.INIT, {type: GameActionTypes.InitializeGame, payload: {initialized: initializedGameState}});
     console.log(`Initialized game for ${username} in room ${roomId}`);
   });
 
-  socket.on(SocketTags.ACTION, async () => {
+  socket.on(SocketTags.ACTION, async (action: PlayerAction) => {
     const roomId = await getUserRoom(username);
-    roomId && initMatch(socket, roomId);
+    if (!roomId) return;
+    const gameState = await getGameState(roomId);
+    const playerId = gameState.players.findIndex(player => player.username === username);
+    if (playerId == -1) { console.error(`User ${username} not found in room ${roomId}`); return; }
+    const updates = handlePlayerAction(action, playerId, gameState);
+    await io.to(roomId).emit(SocketTags.UPDATE, updates);
+    await setGameState(roomId, gameReducer(gameState, updates));
+    console.log(`Handled ${username}'s ${PlayerActionType[action.type]} in room ${roomId}`);
   });
 })
 );

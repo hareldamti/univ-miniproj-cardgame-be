@@ -1,67 +1,41 @@
-import { Coords, DevelopmentCard, Hexagonal, HexType, EdgeLocation, Robber, NodeLocation, Table, SpecialCard } from "../Entities/Models";
-import { KnightCard, LargestArmyCard, LongestRoadCard } from "../Entities/Models";
-import { GameState, PlayerState } from "../Entities/State";
-import { availableRoads, availableSettlements } from "./BoardLogic";
+import { Coords, DevelopmentCard, Hexagonal, HexType, EdgeLocation, Robber, NodeLocation, Table, SpecialCard } from "../package/Entities/Models";
+import { GameState, PlayerState } from "../package/Entities/State";
+import { GameAction } from "../package/Entities/GameActions";
+import { PlayerAction, PlayerActionType } from "../package/Entities/PlayerActions";
+import { availableRoads, availableStructures } from "../package/Logic/BoardLogic";
 
 
-export function handlePlayerAction(action: PlayerAction, userAction): GameState {
+export function handlePlayerAction(action: PlayerAction, playerIdx: number, gameState: GameState): GameAction[] {
     switch (action.type) {
         case PlayerActionType.BuildSettlement:
-            buildSettlement(playerState, gameState, action.NodeLocation);
+            buildSettlement(action.settlement, playerIdx, gameState);
             break;
         case PlayerActionType.BuildCity:
-            buildCity(playerState, gameState, action.city);
+            buildCity(action.city, playerIdx, gameState);
             break;
         case PlayerActionType.BuildRoad:
-            buildRoad(playerState, gameState, action.EdgeLocation);
+            buildRoad(action.road, playerIdx, gameState);
             break;
         case PlayerActionType.DrawDevelopmentCard:
-            buyDevelopmentCard(playerState, gameState);
+            buyDevelopmentCard(playerIdx, gameState);
             break;
         case PlayerActionType.PlayDevelopmentCard:
-            playDevelopmentCard(playerState, gameState, action.card);
+            playDevelopmentCard(action.card, playerIdx, gameState);
             break;
-        case PlayerActionType.Trade:
-            //TODO: trade screen
-            tradeResources(playerState, action.resources);
+        case PlayerActionType.OfferTrade:
+            offerTrade(action.trade, playerIdx, gameState);
+            break;
+        case PlayerActionType.AcceptTrade:
+            acceptTrade(action.trade, playerIdx, gameState);
             break;
         case PlayerActionType.FinishStep:
-            finishStep(gameState);
+            finishStep(playerIdx, gameState);
             break;
     }
     return gameState;
 }
-//if the player can build a road
-function canBuildRoad(playerState: PlayerState, gameState: GameState, EdgeLocation: EdgeLocation): boolean {
-    return playerState.Resources.lumber > 0 && playerState.Resources.brick > 0 && availableRoads(playerState, gameState).length > 0
-    && playerState.AvailableAssets.roads > 0
-    && availableRoads(playerState, gameState).includes(EdgeLocation);
-}
 
-//if the player can build a settlement
-function canBuildSettlement(playerState: PlayerState, gameState: GameState, NodeLocation: NodeLocation): boolean {
-    return playerState.Resources.lumber > 0 && playerState.Resources.brick > 0 && playerState.Resources.wool > 0 && playerState.Resources.grain > 0
-    && availableSettlements(gameState).length > 0 && playerState.AvailableAssets.settlements > 0
-    && availableSettlements(gameState).includes(NodeLocation);
-}
 
-//if the player can build a city
-function canBuildCity(playerState: PlayerState, gameState: GameState, NodeLocation: NodeLocation): boolean {
-    return playerState.Resources.grain > 1 && playerState.Resources.ore > 2 && playerState.AvailableAssets.cities > 0
-    && availableSettlements(gameState).includes(NodeLocation);
-}
-
-//if the player can buy a development card
-function canBuyDevelopmentCard(playerState: PlayerState, gameState: GameState): boolean {
-    return playerState.Resources.grain > 0 && playerState.Resources.ore > 0 && playerState.Resources.wool > 0
-    && gameState.stack.length > 0;
-}
-
-//if the player can play a knight card only. no other development cards can be played.
-//no refering to strongest army card
-function canPlayDevelopmentCard(playerState: PlayerState, gameState: GameState): boolean {
-    return playerState.DevelopmentCards.some(card => card.type === 'Knight') && gameState.round > 2;
-}
  
 // TODO: actual action functions
 //function to build a road

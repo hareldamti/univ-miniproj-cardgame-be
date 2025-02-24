@@ -1,4 +1,4 @@
-import { DevelopmentCard, EdgeLocation, NodeLocation, Resources } from "./Models";
+import { DevelopmentCard, EdgeLocation, NodeLocation, Resources, Trade } from "./Models";
 import { GameState, PlayerState } from "./State";
 
 export enum PlayerActionType {
@@ -7,15 +7,17 @@ export enum PlayerActionType {
     BuildRoad,
     DrawDevelopmentCard,
     PlayDevelopmentCard,
-    Trade,
+    OfferTrade,
+    AcceptTrade,
     FinishStep
 }
 
 export type PlayerAction =
-    | { type: PlayerActionType.BuildSettlement, NodeLocation: NodeLocation }
+    | { type: PlayerActionType.BuildSettlement, settlement: NodeLocation }
     | { type: PlayerActionType.BuildCity, city: NodeLocation }
-    | { type: PlayerActionType.BuildRoad, EdgeLocation: EdgeLocation }
+    | { type: PlayerActionType.BuildRoad, road: EdgeLocation }
     | { type: PlayerActionType.DrawDevelopmentCard }
     | { type: PlayerActionType.PlayDevelopmentCard, card: DevelopmentCard }
-    | { type: PlayerActionType.Trade, resources: Resources }
+    | { type: PlayerActionType.OfferTrade, trade: Trade }
+    | { type: PlayerActionType.AcceptTrade, trade: Trade }
     | { type: PlayerActionType.FinishStep };

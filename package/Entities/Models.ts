@@ -22,7 +22,7 @@ export type ScoringPlayers = {
 }
 
 export type Hexagonal = {
-    id: number,
+    coords: Coords,
     type: HexType,
     nuOfPoints: number,
 }
@@ -87,3 +87,8 @@ export type LongestRoadCard = {
     points: 2, // Points worth by the card
 }
 
+export type Trade = {
+    offeredByIdx: number,
+    offeredToIdx: number,
+    tradeDelta: Resources,
+}
