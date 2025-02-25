@@ -8,8 +8,8 @@ import { addResources, canBuy, cityCost, multiplyResources, negateResources, res
 
 export function handlePlayerAction(action: PlayerAction, playerId: number, gameState: GameState): GameAction[] {
     switch (action.type) {
-        case PlayerActionType.AcceptTrade:
-            return acceptTrade(action.trade, playerId, gameState)
+        case PlayerActionType.RespondToTrade:
+            return respondToTrade(action.accepted, playerId, gameState)
     }
     if (getCurrentPlayer(gameState) != playerId) {
         console.log(`Player ${playerId} tried to play ${PlayerActionType[action.type]} at player ${getCurrentPlayer(gameState)}'s turn`);
@@ -34,7 +34,7 @@ export function handlePlayerAction(action: PlayerAction, playerId: number, gameS
 }
 function buildSettlement(settlement: NodeLocation, playerId: number, gameState: GameState): GameAction[] {
     const isStarting = getRound(gameState) == 1 || getRound(gameState) == 2;
-    const canBuild = (isStarting || canBuy(gameState.players[playerId].Resources, settlementCost))
+    const canBuild = (isStarting || canBuy(gameState, playerId, settlementCost))
                       && hasNode(availableStructures(playerId, gameState), settlement);
     if (!canBuild) return [];
     const updates: GameAction[] = [{
@@ -50,7 +50,7 @@ function buildSettlement(settlement: NodeLocation, playerId: number, gameState: 
 }
 
 function buildCity(city: NodeLocation, playerId: number, gameState: GameState): GameAction[] {
-    const canBuild = canBuy(gameState.players[playerId].Resources, cityCost)
+    const canBuild = canBuy(gameState, playerId, cityCost)
                       && hasNode(availableStructures(playerId, gameState), city);
     if (!canBuild) return [];
     return [{
@@ -62,7 +62,7 @@ function buildCity(city: NodeLocation, playerId: number, gameState: GameState): 
 
 function buildRoad(road: EdgeLocation, playerId: number, gameState: GameState): GameAction[] {
     const isStarting = getRound(gameState) == 0 || getRound(gameState) == 3;
-    const canBuild = (isStarting || canBuy(gameState.players[playerId].Resources, roadCost))
+    const canBuild = (isStarting || canBuy(gameState, playerId, roadCost))
                       && hasEdge(availableRoads(playerId, gameState), road);
     if (!canBuild) return [];
     const updates: GameAction[] = [{
@@ -89,7 +89,7 @@ function offerTrade(trade: Trade, playerId: number, gameState: GameState): GameA
     throw new Error("Function not implemented.");
 }
 
-function acceptTrade(trade: Trade, playerId: number, gameState: GameState): GameAction[] {
+function respondToTrade(trade: boolean, playerId: number, gameState: GameState): GameAction[] {
     throw new Error("Function not implemented.");
 }
 

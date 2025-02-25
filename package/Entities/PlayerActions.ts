@@ -8,7 +8,7 @@ export enum PlayerActionType {
     DrawDevelopmentCard,
     PlayDevelopmentCard,
     OfferTrade,
-    AcceptTrade,
+    RespondToTrade,
     FinishStep
 }
 
@@ -19,5 +19,5 @@ export type PlayerAction =
     | { type: PlayerActionType.DrawDevelopmentCard }
     | { type: PlayerActionType.PlayDevelopmentCard, card: DevelopmentCard }
     | { type: PlayerActionType.OfferTrade, trade: Trade }
-    | { type: PlayerActionType.AcceptTrade, trade: Trade }
+    | { type: PlayerActionType.RespondToTrade, accepted: boolean }
     | { type: PlayerActionType.FinishStep };

@@ -10,8 +10,6 @@ export enum GameActionTypes {
     InitializeGame,
     ChangeResources,
     FinishStep,
-    // User actions:
-    SetVisibleAvailableStructures,
 }
 
 export const validateActions = (actions: any): actions is GameAction[] => {
@@ -23,7 +21,6 @@ export type GameAction =
     | { type: GameActionTypes.AddSettlement, payload: {playerId: number, settlement: NodeLocation} }
     | { type: GameActionTypes.AddRoad, payload: {playerId: number, road: EdgeLocation} }
     | { type: GameActionTypes.ChangeResources, payload: {playerId: number, delta: Resources} }
-    | { type: GameActionTypes.SetVisibleAvailableStructures, payload: {choice: 'Cities' | 'Settlements' | 'Roads' | null }}
     | { type: GameActionTypes.InitializeGame, payload: {initialized: GameState}}
     | { type: GameActionTypes.FinishStep, payload: {dice: [number, number] | null }}
 
@@ -38,12 +35,12 @@ export function gameReducer(state: GameState, actions: GameAction[]): GameState 
                 break;
             }
             case GameActionTypes.AddSettlement: {
-                let update = {...updatedState, players: updatedState.players.map(player => player.id == action.payload.playerId ? {...player, Settlements: [...player.Settlements, {...action.payload.settlement, owner: player.id}]} : player)}
+                let update = {...updatedState, players: updatedState.players.map(player => player.id == action.payload.playerId ? {...player, Settlements: [...player.Settlements, {...action.payload.settlement, owner: player.id}], score: player.score + 1} : player)}
                 updatedState = {...update, Table: getTableState(update)};
                 break;
             } 
             case GameActionTypes.AddCity: {
-                let update = {...updatedState, players: updatedState.players.map(player => player.id == action.payload.playerId ? {...player, Cities: [...player.Cities, {...action.payload.city, owner: player.id}]} : player)}
+                let update = {...updatedState, players: updatedState.players.map(player => player.id == action.payload.playerId ? {...player, Cities: [...player.Cities, {...action.payload.city, owner: player.id}], score: player.score + 2} : player)}
                 updatedState = {...update, Table: getTableState(update)};
                 break;
             }
@@ -58,10 +55,6 @@ export function gameReducer(state: GameState, actions: GameAction[]): GameState 
             }
             case GameActionTypes.FinishStep: {
                 updatedState = {...updatedState, turn: updatedState.turn + 1, lastDice: action.payload.dice}
-                break;
-            }
-            case GameActionTypes.SetVisibleAvailableStructures: {     
-                updatedState = {...updatedState, user: {...updatedState.user, availableVisible: action.payload.choice}};
                 break;
             }
         }

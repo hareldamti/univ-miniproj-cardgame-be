@@ -88,7 +88,7 @@ export type LongestRoadCard = {
 }
 
 export type Trade = {
-    offeredByIdx: number,
-    offeredToIdx: number,
+    offeredById: number,
+    offeredToId: number,
     tradeDelta: Resources,
 }
