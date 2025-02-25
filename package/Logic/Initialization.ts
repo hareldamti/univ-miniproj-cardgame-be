@@ -1,6 +1,7 @@
 import { Coords, DevelopmentCard, Hexagonal, HexType, EdgeLocation, Robber, NodeLocation, Table } from "../Entities/Models";
 import { GameState, PlayerState, UserState } from "../Entities/State";
 import { shuffle } from "./BoardUtils"
+import { cityCost, roadCost, subtractResources, zeroCost } from "./GameUtils";
 // Initialize Game
 // returns new Game: GameState
 
@@ -18,6 +19,7 @@ export function initializeGame(usernames: string[]): GameState {
         players: players,
         stack: initializeStack(),
         turn: 0,
+        openTrades: [],
         lastDice: null,
         user: initializeUser()
     };

@@ -86,11 +86,25 @@ function playDevelopmentCard(card: DevelopmentCard, playerId: number, gameState:
 }
 
 function offerTrade(trade: Trade, playerId: number, gameState: GameState): GameAction[] {
-    throw new Error("Function not implemented.");
+    if (trade.offeredById != playerId) return [];
+    if (!canBuy(gameState, playerId, trade.tradeDelta)) return [];
+    if (gameState.openTrades.map(trade => trade.offeredToId).includes(trade.offeredToId)) return [];
+    return [{type: GameActionTypes.OpenTrade, payload: {trade}}]
 }
 
-function respondToTrade(trade: boolean, playerId: number, gameState: GameState): GameAction[] {
-    throw new Error("Function not implemented.");
+function respondToTrade(accepted: boolean, playerId: number, gameState: GameState): GameAction[] {
+    const trades_ = gameState.openTrades.filter(trade => trade.offeredById == playerId);
+    if (trades_.length > 0) return [{type: GameActionTypes.CloseTrade, payload: {trade: trades_[0]}}];
+    
+    const trades = gameState.openTrades.filter(trade => trade.offeredToId == playerId);
+    if (trades.length == 0) return [];
+    const trade = trades[0];
+    const updates: GameAction[] = [{type: GameActionTypes.CloseTrade, payload: {trade}}];
+    if (accepted && canBuy(gameState, playerId, negateResources(trade.tradeDelta))) {
+        updates.push({type: GameActionTypes.ChangeResources, payload: {playerId: trade.offeredById, delta: negateResources(trade.tradeDelta)}});
+        updates.push({type: GameActionTypes.ChangeResources, payload: {playerId: trade.offeredToId, delta: trade.tradeDelta}});
+    }
+    return updates;
 }
 
 function finishStep(playerId: number, gameState: GameState): GameAction[] {

@@ -1,10 +1,11 @@
-import { DevelopmentCard, Resources, EdgeLocation, NodeLocation, SpecialCard, Table } from './Models';
+import { DevelopmentCard, Resources, EdgeLocation, NodeLocation, SpecialCard, Table, Trade } from './Models';
 
 export type GameState = {
     Table: Table,
     players: PlayerState[],
     stack: DevelopmentCard[],
     turn: number,
+    openTrades: Trade[],
     lastDice: [number, number] | null,
     user: UserState
 }

@@ -1,6 +1,6 @@
 import { getTableState } from "../Logic/BoardLogic";
 import { addResources } from "../Logic/GameUtils";
-import { EdgeLocation, NodeLocation, Resources } from "./Models";
+import { EdgeLocation, NodeLocation, Resources, Trade } from "./Models";
 import { GameState } from "./State";
 
 export enum GameActionTypes {
@@ -10,6 +10,8 @@ export enum GameActionTypes {
     InitializeGame,
     ChangeResources,
     FinishStep,
+    OpenTrade,
+    CloseTrade
 }
 
 export const validateActions = (actions: any): actions is GameAction[] => {
@@ -23,7 +25,8 @@ export type GameAction =
     | { type: GameActionTypes.ChangeResources, payload: {playerId: number, delta: Resources} }
     | { type: GameActionTypes.InitializeGame, payload: {initialized: GameState}}
     | { type: GameActionTypes.FinishStep, payload: {dice: [number, number] | null }}
-
+    | { type: GameActionTypes.OpenTrade, payload: {trade: Trade }}
+    | { type: GameActionTypes.CloseTrade, payload: {trade: Trade }}
 
 export function gameReducer(state: GameState, actions: GameAction[]): GameState {
     let updatedState: GameState = state;
@@ -54,7 +57,15 @@ export function gameReducer(state: GameState, actions: GameAction[]): GameState 
                 break;
             }
             case GameActionTypes.FinishStep: {
-                updatedState = {...updatedState, turn: updatedState.turn + 1, lastDice: action.payload.dice}
+                updatedState = {...updatedState, turn: updatedState.turn + 1, lastDice: action.payload.dice};
+                break;
+            }
+            case GameActionTypes.OpenTrade: {
+                updatedState = {...updatedState, openTrades: [...updatedState.openTrades, action.payload.trade]};
+                break;
+            }
+            case GameActionTypes.CloseTrade: {
+                updatedState = {...updatedState, openTrades: updatedState.openTrades.filter(trade => trade.offeredById != action.payload.trade.offeredById || trade.offeredToId != action.payload.trade.offeredToId)};
                 break;
             }
         }
