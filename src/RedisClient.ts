@@ -6,7 +6,9 @@ export class RedisClient {
   public redisClient: RedisClientType;
 
   constructor() {
-    this.redisClient = createClient();
+    this.redisClient = createClient(
+      { url: process.env.REDIS_URL }
+    );
     this.redisClient.on("error", (err) => {
       console.log("Redis Client Error", err);
       exit(1);
