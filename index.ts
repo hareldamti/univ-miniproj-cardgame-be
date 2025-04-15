@@ -141,7 +141,7 @@ app.get("/", (req: Request, res: Response) => {
   res.sendFile(__dirname + "/index.html");
 });
 
-httpServer.listen(3000, async () => {
+httpServer.listen(process.env.PORT, '0.0.0.0', async () => {
   redisClient = new RedisClient();
-  console.log("listening on *:3000");
+  console.log(`listening on *:${process.env.PORT}`);
 });
