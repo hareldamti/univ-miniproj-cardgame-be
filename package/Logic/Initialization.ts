@@ -1,4 +1,4 @@
-import { Coords, DevelopmentCard, Hexagonal, HexType, EdgeLocation, Robber, NodeLocation, Table } from "../Entities/Models";
+import { Coords, DevelopmentCard, Hexagonal, HexType, EdgeLocation, Robber, NodeLocation, Table, RoadBuildingCard, ChapelCard, GreatHallCard, LibraryCard, MarketCard, MonopolyCard, UniversityCard, YearOfPlentyCard } from "../Entities/Models";
 import { GameState, PlayerState, UserState } from "../Entities/State";
 import { shuffle } from "./BoardUtils"
 import { cityCost, roadCost, subtractResources, zeroCost } from "./GameUtils";
@@ -144,11 +144,7 @@ function initializePlayer(username: string, currentPlayer: number): PlayerState 
         Settlements: [],
         Cities: [],
         Roads: [],
-        AvailableAssets: {
-            settlements: 5,
-            cities: 4,
-            roads: 15,
-        },
+        ActiveSpecialActions: [],
         Resources: {
             lumber: 0,
             brick: 0,
@@ -156,28 +152,38 @@ function initializePlayer(username: string, currentPlayer: number): PlayerState 
             grain: 0,
             wool: 0,
         },
-        DevelopmentCards: [],
+        DevelopmentCards: [RoadBuildingCard,
+            YearOfPlentyCard,
+            MonopolyCard,
+            RoadBuildingCard,
+            YearOfPlentyCard,
+            MonopolyCard,
+            UniversityCard,
+            MarketCard,
+            GreatHallCard,
+            ChapelCard,
+            LibraryCard],
         knightsPlayed: 0,
-        SpecialCards: [],
         score: 0,
     };
 }
 
 // Initialize Stack
 function initializeStack(): DevelopmentCard[] {
-    let stack: DevelopmentCard[] = [];
-
-    // Create 11 Knight cards
-    for (let i = 0; i < 11; i++) {
-        stack.push({ type: 'Knight', description: 'Move the robber' });
-    }
-    // Create 4 Victory Point cards
-    for (let i = 0; i < 4; i++) {
-        stack.push({ type: 'Victory', points: 1 });
-    }
-    // Shuffle the stack
+    let stack: DevelopmentCard[] = [
+        RoadBuildingCard,
+        YearOfPlentyCard,
+        MonopolyCard,
+        RoadBuildingCard,
+        YearOfPlentyCard,
+        MonopolyCard,
+        UniversityCard,
+        MarketCard,
+        GreatHallCard,
+        ChapelCard,
+        LibraryCard
+    ];
     stack = shuffle(stack);
-
     return stack;
 }
 

@@ -1,4 +1,4 @@
-import { DevelopmentCard, Resources, EdgeLocation, NodeLocation, SpecialCard, Table, Trade } from './Models';
+import { DevelopmentCard, Resources, EdgeLocation, NodeLocation, Table, Trade, SpecialAction } from './Models';
 
 export type GameState = {
     Table: Table,
@@ -7,7 +7,9 @@ export type GameState = {
     turn: number,
     openTrades: Trade[],
     lastDice: [number, number] | null,
-    user: UserState
+    user: UserState,
+    winnerId?: number
+    quitterId?: number
 }
 
 export const getCurrentPlayer = (state: GameState) => state.turn % state.players.length;
@@ -25,14 +27,9 @@ export type PlayerState = {
     Settlements: NodeLocation[], // IDs of placed settlements
     Cities: NodeLocation[], // IDs of placed cities
     Roads: EdgeLocation[], // all placed roads
-    AvailableAssets: {
-        settlements: number, // Number of settlements left to build
-        cities: number, // Number of cities left to build
-        roads: number, // Number of roads left to build
-    },
+    ActiveSpecialActions: SpecialAction[], 
     Resources: Resources,
     DevelopmentCards: DevelopmentCard[], //cards that you can buy
     knightsPlayed: number,
-    SpecialCards: SpecialCard[], 
     score: number
 }

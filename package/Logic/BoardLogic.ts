@@ -1,4 +1,4 @@
-import { Coords, DevelopmentCard, Hexagonal, HexType, EdgeLocation, Robber, NodeLocation, Table } from "../Entities/Models";
+import { Coords, DevelopmentCard, Hexagonal, HexType, EdgeLocation, Robber, NodeLocation, Table, SpecialAction } from "../Entities/Models";
 import { GameState, getRound, PlayerState } from "../Entities/State";
 import { allEdges, allNodes, diffEdges, diffNodes, getConnectedRoads, getNodeRoads, getRoadNodes, uniqueEdges } from "./BoardUtils";
 
@@ -40,6 +40,9 @@ export function availableRoads(playerId: number, gameState: GameState): EdgeLoca
         ...gameState.Table.Roads.filter(road => road.owner == playerId),
         ...[...gameState.Table.Settlements, ...gameState.Table.Cities, ].filter(road => road.owner != playerId).flatMap(getNodeRoads)
     ];
+    if (gameState.players[playerId].ActiveSpecialActions.includes(SpecialAction.BuildRoad)) {
+        return diffEdges(gameState.players[playerId].Roads.map(getConnectedRoads).flat(1), taken);
+    }
     switch (getRound(gameState)) {
         case 1:
         case 2:

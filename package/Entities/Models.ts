@@ -63,28 +63,78 @@ export interface Resources {
     wool: number;
 }
 
-export type DevelopmentCard = KnightCard | VictoryCard;
-
-export type KnightCard = {
-    type: 'Knight',
-    description: string, // Description of the card's effect
+export enum DevelopmentCardTypes {
+    RoadBuilding,
+    YearOfPlenty,
+    Monopoly,
+    University,
+    Market,
+    GreatHall,
+    Chapel,
+    Library
 }
 
-export type VictoryCard = {
-    type: 'Victory',
-    points: 1, // Points worth by the card
+export enum SpecialAction {
+    BuildRoad,
+    ResouceFromBank,
+    ResourceFromPlayers,
 }
 
-export type SpecialCard = LargestArmyCard | LongestRoadCard;
-
-export type LargestArmyCard = {
-    type: 'LargestArmy',
-    points: 2, // Points worth by the card
+export type DevelopmentCard = {
+    type: DevelopmentCardTypes,
+    name: string,
+    description: string,
+    points?: number,
+    specialActions?: SpecialAction[]
 }
 
-export type LongestRoadCard = {
-    type: 'LongestRoad',
-    points: 2, // Points worth by the card
+export const RoadBuildingCard: DevelopmentCard  = {
+	type: DevelopmentCardTypes.RoadBuilding,
+	name: "Road Building",
+	description: "Build two new roads",
+    specialActions: [SpecialAction.BuildRoad, SpecialAction.BuildRoad]
+}
+export const YearOfPlentyCard : DevelopmentCard = {
+	type: DevelopmentCardTypes.YearOfPlenty,
+	name: "Year Of Plenty",
+	description: "Choose two resources to take from the bank",
+    specialActions: [SpecialAction.ResouceFromBank, SpecialAction.ResouceFromBank]
+}
+export const MonopolyCard : DevelopmentCard = {
+	type: DevelopmentCardTypes.Monopoly,
+	name: "Monopoly",
+	description: "Choose a resource type and get all of it from players",
+    specialActions: [SpecialAction.ResourceFromPlayers]
+}
+export const UniversityCard : DevelopmentCard = {
+	type: DevelopmentCardTypes.University,
+	name: "University",
+	description: "Activate to get 1 point",
+	points: 1
+}
+export const MarketCard : DevelopmentCard = {
+	type: DevelopmentCardTypes.Market,
+	name: "Market",
+	description: "Activate to get 1 point",
+	points: 1
+}
+export const GreatHallCard : DevelopmentCard = {
+	type: DevelopmentCardTypes.GreatHall,
+	name: "Great Hall",
+	description: "Activate to get 1 point",
+	points: 1
+}
+export const ChapelCard : DevelopmentCard = {
+	type: DevelopmentCardTypes.Chapel,
+	name: "Chapel",
+	description: "Activate to get 1 point",
+	points: 1
+}
+export const LibraryCard : DevelopmentCard = {
+	type: DevelopmentCardTypes.Library,
+	name: "Library",
+	description: "Activate to get 1 point",
+	points: 1
 }
 
 export type Trade = {

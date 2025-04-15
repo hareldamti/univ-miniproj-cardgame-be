@@ -1,37 +1,67 @@
-import { GameAction, GameActionTypes } from "../Entities/GameActions";
-import { Coords, DevelopmentCard, EdgeLocation, Hexagonal, NodeLocation, Trade } from "../Entities/Models";
+import { GameAction, GameActionTypes, gameReducer } from "../Entities/GameActions";
+import { Coords, DevelopmentCard, EdgeLocation, Hexagonal, HexType, NodeLocation, Resources, SpecialAction, Trade } from "../Entities/Models";
 import { PlayerAction, PlayerActionType } from "../Entities/PlayerActions";
 import { GameState, getCurrentPlayer, getNextRound, getRound } from "../Entities/State";
 import { availableRoads, availableStructures } from "./BoardLogic";
 import { hasEdge, hasNode } from "./BoardUtils";
-import { addResources, canBuy, cityCost, multiplyResources, negateResources, resourceAt, roadCost, rollDice, settlementCost, zeroCost } from "./GameUtils";
+import { addResources, canBuy, cardCost, cityCost, developmentCardCost, dotResources, getWinner, multiplyResources, negateResources, resourceAt, roadCost, rollDice, settlementCost, zeroCost } from "./GameUtils";
 
-export function handlePlayerAction(action: PlayerAction, playerId: number, gameState: GameState): GameAction[] {
+export function handlePlayerAction(action: PlayerAction, playerId: number, gameState: GameState): {updates: GameAction[], updatedGame: GameState} {
+    let updates: GameAction[] = [];
     switch (action.type) {
         case PlayerActionType.RespondToTrade:
-            return respondToTrade(action.accepted, playerId, gameState)
+            updates = respondToTrade(action.accepted, playerId, gameState);
+            break;
+        case PlayerActionType.Quit:
+            updates = quitGame(playerId);
+            break;
     }
     if (getCurrentPlayer(gameState) != playerId) {
         console.log(`Player ${playerId} tried to play ${PlayerActionType[action.type]} at player ${getCurrentPlayer(gameState)}'s turn`);
-        return [];
+        return {updates: [], updatedGame: gameState};
     }
     switch (action.type) {
         case PlayerActionType.BuildSettlement:
-            return buildSettlement(action.settlement, playerId, gameState);
+            updates = buildSettlement(action.settlement, playerId, gameState);
+            break;
         case PlayerActionType.BuildCity:
-            return buildCity(action.city, playerId, gameState);
+            updates = buildCity(action.city, playerId, gameState);
+            break;
         case PlayerActionType.BuildRoad:
-            return buildRoad(action.road, playerId, gameState);
+            updates = buildRoad(action.road, playerId, gameState);
+            break;
         case PlayerActionType.DrawDevelopmentCard:
-            return buyDevelopmentCard(playerId, gameState);
+            updates = buyDevelopmentCard(playerId, gameState);
+            break;
         case PlayerActionType.PlayDevelopmentCard:
-            return playDevelopmentCard(action.card, playerId, gameState);
+            updates = playDevelopmentCard(action.cardIdx, playerId, gameState);
+            break;
         case PlayerActionType.OfferTrade:
-            return offerTrade(action.trade, playerId, gameState);
+            updates = offerTrade(action.trade, playerId, gameState);
+            break;
         case PlayerActionType.FinishStep:
-            return finishStep(playerId, gameState);
+            updates = finishStep(playerId, gameState);
+            break;
+        case PlayerActionType.GetResource:
+            updates = getResource(action.resource, playerId, gameState);
+            break;
+        case PlayerActionType.StealResource:
+            updates = stealResource(action.resource, playerId, gameState);
+            break;
     }
+    const updatedGame = gameReducer(gameState, updates);
+    const winnerPlayerId = getWinner(updatedGame);
+    if (winnerPlayerId != undefined) {
+        updates.push({ type: GameActionTypes.FinishGame, payload: { winnerPlayerId }});
+    }
+    return {updates, updatedGame};
+
 }
+
+function quitGame(quittingPlayerId: number): GameAction[] {
+    return [{ type: GameActionTypes.FinishGame, payload: { quittingPlayerId } }];
+}
+
 function buildSettlement(settlement: NodeLocation, playerId: number, gameState: GameState): GameAction[] {
     const isStarting = getRound(gameState) == 1 || getRound(gameState) == 2;
     const canBuild = (isStarting || canBuy(gameState, playerId, settlementCost))
@@ -61,14 +91,18 @@ function buildCity(city: NodeLocation, playerId: number, gameState: GameState): 
 }
 
 function buildRoad(road: EdgeLocation, playerId: number, gameState: GameState): GameAction[] {
+    const withSpecialAction = gameState.players[playerId].ActiveSpecialActions.includes(SpecialAction.BuildRoad);
     const isStarting = getRound(gameState) == 0 || getRound(gameState) == 3;
     const canBuild = (isStarting || canBuy(gameState, playerId, roadCost))
-                      && hasEdge(availableRoads(playerId, gameState), road);
+                      && hasEdge(availableRoads(playerId, gameState), road) || withSpecialAction;
     if (!canBuild) return [];
     const updates: GameAction[] = [{
         type: GameActionTypes.AddRoad, payload: { playerId, road }
     }];
-    if (!isStarting) updates.push({
+    if (withSpecialAction) updates.push({
+        type: GameActionTypes.UseSpecialAction, payload: { playerId, type: SpecialAction.BuildRoad }
+    })
+    if (!isStarting && !withSpecialAction) updates.push({
         type: GameActionTypes.ChangeResources, payload: { playerId, delta: negateResources(roadCost) }
     });
     if (isStarting) updates.push({
@@ -78,11 +112,18 @@ function buildRoad(road: EdgeLocation, playerId: number, gameState: GameState): 
 }
 
 function buyDevelopmentCard(playerId: number, gameState: GameState): GameAction[] {
-    throw new Error("Function not implemented.");
+    const canBuild = canBuy(gameState, playerId, developmentCardCost);
+    if (!canBuild) return [];
+    return [{
+        type: GameActionTypes.DrawDevelopmentCard, payload: { playerId }
+    }, {
+        type: GameActionTypes.ChangeResources, payload: { playerId, delta: negateResources(developmentCardCost) }
+    }];
 }
 
-function playDevelopmentCard(card: DevelopmentCard, playerId: number, gameState: GameState): GameAction[] {
-    throw new Error("Function not implemented.");
+function playDevelopmentCard(cardIdx: number, playerId: number, gameState: GameState): GameAction[] {
+    if (cardIdx < 0 || cardIdx >= gameState.players[playerId].DevelopmentCards.length) return [];
+    return [{ type: GameActionTypes.ApplyDevelopmentCard, payload: { playerId, cardIdx }}];
 }
 
 function offerTrade(trade: Trade, playerId: number, gameState: GameState): GameAction[] {
@@ -134,6 +175,37 @@ function finishStep(playerId: number, gameState: GameState): GameAction[] {
             }
         });
     };
+    return updates;
+}
+
+function getResource(resource: HexType, playerId: number, gameState: GameState): GameAction[] {
+    if (!gameState.players[playerId].ActiveSpecialActions.includes(SpecialAction.ResouceFromBank))
+        return [];
+    return [{
+        type: GameActionTypes.ChangeResources, payload: { playerId, delta: resourceAt(resource) }
+    }, {
+        type: GameActionTypes.UseSpecialAction, payload: {playerId, type: SpecialAction.ResouceFromBank}
+    }];
+}
+
+function stealResource(resourceType: HexType, playerId: number, gameState: GameState): GameAction[] {
+    if (!gameState.players[playerId].ActiveSpecialActions.includes(SpecialAction.ResourceFromPlayers))
+        return [];
+    const updates: GameAction[] = [{
+        type: GameActionTypes.UseSpecialAction, payload: {playerId, type: SpecialAction.ResourceFromPlayers}
+    }];
+    let resource = resourceAt(resourceType);
+    let total = zeroCost;
+    gameState.players.forEach(player => {
+        let steal = dotResources(resource, player.Resources);
+        total = addResources(total, steal);
+        updates.push({
+            type: GameActionTypes.ChangeResources, payload: {playerId: player.id, delta: negateResources(steal)}
+        });
+    });
+    updates.push({
+        type: GameActionTypes.ChangeResources, payload: {playerId, delta: total}
+    });
     return updates;
 }
 

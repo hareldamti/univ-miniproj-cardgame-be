@@ -1,6 +1,6 @@
 import { getTableState } from "../Logic/BoardLogic";
 import { addResources } from "../Logic/GameUtils";
-import { EdgeLocation, NodeLocation, Resources, Trade } from "./Models";
+import { EdgeLocation, NodeLocation, Resources, SpecialAction, Trade } from "./Models";
 import { GameState } from "./State";
 
 export enum GameActionTypes {
@@ -9,9 +9,13 @@ export enum GameActionTypes {
     AddRoad,
     InitializeGame,
     ChangeResources,
+    DrawDevelopmentCard,
+    ApplyDevelopmentCard,
+    UseSpecialAction,
     FinishStep,
     OpenTrade,
-    CloseTrade
+    CloseTrade,
+    FinishGame
 }
 
 export const validateActions = (actions: any): actions is GameAction[] => {
@@ -27,6 +31,10 @@ export type GameAction =
     | { type: GameActionTypes.FinishStep, payload: {dice: [number, number] | null }}
     | { type: GameActionTypes.OpenTrade, payload: {trade: Trade }}
     | { type: GameActionTypes.CloseTrade, payload: {trade: Trade }}
+    | { type: GameActionTypes.FinishGame, payload: {winnerPlayerId?: number, quittingPlayerId?: number}}
+    | { type: GameActionTypes.DrawDevelopmentCard, payload: { playerId: number }}
+    | { type: GameActionTypes.ApplyDevelopmentCard, payload: { playerId: number, cardIdx: number }}
+    | { type: GameActionTypes.UseSpecialAction, payload: { playerId: number, type: SpecialAction }}
 
 export function gameReducer(state: GameState, actions: GameAction[]): GameState {
     let updatedState: GameState = state;
@@ -52,6 +60,26 @@ export function gameReducer(state: GameState, actions: GameAction[]): GameState 
                 updatedState = {...update, Table: getTableState(update)};
                 break;
             }
+            case GameActionTypes.DrawDevelopmentCard: {
+                updatedState = {...updatedState, players: updatedState.players.map(player => player.id == action.payload.playerId ? {...player, DevelopmentCards: [...player.DevelopmentCards, ...updatedState.stack.splice(0, 1)]} : player)};
+                break;
+            }
+            case GameActionTypes.ApplyDevelopmentCard: {
+                if (action.payload.playerId < 0 || action.payload.playerId > updatedState.players.length) break;
+                const card = updatedState.players[action.payload.playerId].DevelopmentCards.splice(action.payload.cardIdx, 1)[0];
+                if (!card) break;
+                updatedState.stack.push(card);
+                updatedState.players[action.payload.playerId].ActiveSpecialActions = [...updatedState.players[action.payload.playerId].ActiveSpecialActions, ...(card.specialActions ?? [])];
+                updatedState.players[action.payload.playerId].score += card.points ?? 0;
+                updatedState = {...updatedState};
+                break;
+            }
+            case GameActionTypes.UseSpecialAction: {
+                const idx = updatedState.players[action.payload.playerId].ActiveSpecialActions.indexOf(action.payload.type);
+                updatedState.players[action.payload.playerId].ActiveSpecialActions.splice(idx, 1);
+                updatedState = {...updatedState};
+                break;
+            }
             case GameActionTypes.ChangeResources: {
                 updatedState = {...updatedState, players: updatedState.players.map(player => player.id == action.payload.playerId ? {...player, Resources: addResources(player.Resources, action.payload.delta)} : player)}
                 break;
@@ -67,6 +95,9 @@ export function gameReducer(state: GameState, actions: GameAction[]): GameState 
             case GameActionTypes.CloseTrade: {
                 updatedState = {...updatedState, openTrades: updatedState.openTrades.filter(trade => trade.offeredById != action.payload.trade.offeredById || trade.offeredToId != action.payload.trade.offeredToId)};
                 break;
+            }
+            case GameActionTypes.FinishGame: {
+                updatedState = {...updatedState, turn: -1, winnerId: action.payload.winnerPlayerId, quitterId: action.payload.quittingPlayerId }
             }
         }
     });
