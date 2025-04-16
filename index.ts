@@ -16,7 +16,6 @@ import {
   GameActionTypes,
   gameReducer,
 } from "./package/Entities/GameActions";
-import { GameState } from "./package/Entities/State";
 import {
   PlayerAction,
   PlayerActionType,
@@ -27,10 +26,10 @@ let redisClient: RedisClient;
 
 const io = new Server(httpServer, {
   cors: {
-    //origin: "https://example.com",
-    //allowedHeaders: ["my-custom-header"],
-    //credentials: true
-  },
+    origin: '*', // or '*' during dev
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
 });
 
 io.use((socket, next) => {
