@@ -26,8 +26,9 @@ let redisClient: RedisClient;
 
 const io = new Server(httpServer, {
   cors: {
-    origin: '*', // or '*' during dev
+    origin: 'http://localhost:3000',
     methods: ['GET', 'POST'],
+    credentials: true
   }
 });
 
