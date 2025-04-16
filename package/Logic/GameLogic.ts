@@ -18,9 +18,8 @@ export function handlePlayerAction(action: PlayerAction, playerId: number, gameS
     }
     if (getCurrentPlayer(gameState) != playerId) {
         console.log(`Player ${playerId} tried to play ${PlayerActionType[action.type]} at player ${getCurrentPlayer(gameState)}'s turn`);
-        return {updates: [], updatedGame: gameState};
     }
-    switch (action.type) {
+    else switch (action.type) {
         case PlayerActionType.BuildSettlement:
             updates = buildSettlement(action.settlement, playerId, gameState);
             break;
@@ -136,7 +135,6 @@ function offerTrade(trade: Trade, playerId: number, gameState: GameState): GameA
 function respondToTrade(accepted: boolean, playerId: number, gameState: GameState): GameAction[] {
     const trades_ = gameState.openTrades.filter(trade => trade.offeredById == playerId);
     if (trades_.length > 0) return [{type: GameActionTypes.CloseTrade, payload: {trade: trades_[0]}}];
-    
     const trades = gameState.openTrades.filter(trade => trade.offeredToId == playerId);
     if (trades.length == 0) return [];
     const trade = trades[0];
