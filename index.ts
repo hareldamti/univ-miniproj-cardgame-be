@@ -26,7 +26,7 @@ let redisClient: RedisClient;
 
 const io = new Server(httpServer, {
   cors: {
-    origin: 'http://localhost:3000',
+    origin: 'https://univ-miniproj-cardgame-fe.onrender.com',
     methods: ['GET', 'POST'],
     credentials: true
   }
