@@ -7,3 +7,5 @@ export enum SocketTags {
     LEAVE = "LEAVE_ROOM",
     AUDIO = "AUDIO_DATA"
 }
+
+export const BankTradePlayerId = -2;

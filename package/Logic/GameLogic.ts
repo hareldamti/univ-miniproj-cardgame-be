@@ -1,3 +1,4 @@
+import { BankTradePlayerId } from "../Consts";
 import { GameAction, GameActionTypes, gameReducer } from "../Entities/GameActions";
 import { Coords, DevelopmentCard, EdgeLocation, Hexagonal, HexType, NodeLocation, Resources, SpecialAction, Trade } from "../Entities/Models";
 import { PlayerAction, PlayerActionType } from "../Entities/PlayerActions";
@@ -128,6 +129,11 @@ function playDevelopmentCard(cardIdx: number, playerId: number, gameState: GameS
 function offerTrade(trade: Trade, playerId: number, gameState: GameState): GameAction[] {
     if (trade.offeredById != playerId) return [];
     if (!canBuy(gameState, playerId, trade.tradeDelta)) return [];
+    if (trade.offeredToId == BankTradePlayerId) {
+        return [
+            {type: GameActionTypes.ChangeResources, payload: {playerId: trade.offeredById, delta: negateResources(trade.tradeDelta)}}
+        ]
+    }
     if (gameState.openTrades.map(trade => trade.offeredToId).includes(trade.offeredToId)) return [];
     return [{type: GameActionTypes.OpenTrade, payload: {trade}}]
 }
