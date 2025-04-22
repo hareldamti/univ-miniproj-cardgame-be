@@ -79,11 +79,11 @@ io.on(
         console.log(`${username} left room ${roomId}`);
       });
 
-      socket.on(SocketTags.START, async () => {
+      socket.on(SocketTags.START, async (layout: number) => {
         const roomId = await redisClient.getUserRoom(username);
         if (!roomId) return;
         const users = await redisClient.getUsersInRoom(roomId);
-        const initializedGame = initializeGame(users);
+        const initializedGame = initializeGame(users, layout);
         redisClient.setGameState(roomId, initializedGame);
         await io.to(roomId).emit(SocketTags.START);
         const roomStatus = await redisClient.getRoomStatus();
