@@ -83,12 +83,12 @@ io.on(
         const roomId = await redisClient.getUserRoom(username);
         if (!roomId) return;
         const users = await redisClient.getUsersInRoom(roomId);
-        const initializedGame = initializeGame(users, layout);
+        const initializedGame = initializeGame(users, layout ?? 0);
         redisClient.setGameState(roomId, initializedGame);
         await io.to(roomId).emit(SocketTags.START);
         const roomStatus = await redisClient.getRoomStatus();
         await io.emit(SocketTags.LEAVE, roomStatus);
-        console.log(`Starting match in ${roomId}`);
+        console.log(`Starting match in ${roomId} with layout ${layout}`);
       });
 
       socket.on(SocketTags.INIT, async () => {
